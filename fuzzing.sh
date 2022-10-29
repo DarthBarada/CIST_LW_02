@@ -3,9 +3,20 @@
 # Author: Dmitry Mitrofanov
 # Group: ICS8-93
 
+mkdir -pv ./run
+cd ./run
+mkdir -pv ./tmp
+ln -s ../data/ ./data
+ln -s ../input/ ./in
+ln -s ../output/ ./out
+ln -s ../tools/armake/bin/ ./src
 # start the main fuzzer
-afl-fuzz -t 5000 -i ./input -o ./output -M f1 ./tools/armake/bin/armake
+afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -M f1 ./src/armake
 # start parallel child fuzzers
-afl-fuzz -t 5000 -i ./input -o ./output -S f2 ./tools/armake/bin/armake
-afl-fuzz -t 5000 -i ./input -o ./output -S f3 ./tools/armake/bin/armake
-afl-fuzz -t 5000 -i ./input -o ./output -S f4 ./tools/armake/bin/armake
+afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -S f2 ./src/armake
+afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -S f3 ./src/armake
+afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -S f4 ./src/armake
+
+sleep 2h 5m
+
+rm -rf ./run
