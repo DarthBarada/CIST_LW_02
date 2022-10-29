@@ -1,0 +1,6 @@
+[submodule "tools/AFLplusplus"]
+	path = tools/AFLplusplus
+	url = https://github.com/AFLplusplus/AFLplusplus.git
+[submodule "tools/armake"]
+	path = tools/armake
+	url = https://github.com/KoffeinFlummi/armake.git
