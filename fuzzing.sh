@@ -11,11 +11,11 @@ ln -s ../input/ ./in
 ln -s ../output/ ./out
 ln -s ../tools/armake/bin/ ./src
 # start the main fuzzer
-afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -M f1 ./src/armake
+afl-fuzz -V 14400 -t 2000 -i ./in -o ./out -M f1 ./src/armake
 # start parallel child fuzzers
-afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -S f2 ./src/armake
-afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -S f3 ./src/armake
-afl-fuzz -V 7200 -t 5000 -i ./in -o ./out -S f4 ./src/armake
+afl-fuzz -V 14400 -t 2000 -i ./in -o ./out -S f2 ./src/armake
+afl-fuzz -V 14400 -t 2000 -i ./in -o ./out -S f3 ./src/armake
+afl-fuzz -V 14400 -t 2000 -i ./in -o ./out -S f4 ./src/armake
 
 sleep 2h 5m
 
