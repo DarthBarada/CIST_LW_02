@@ -2,3 +2,5 @@
 .git
 run
 output
+armake
+AFLplusplus
