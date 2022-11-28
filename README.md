@@ -77,4 +77,4 @@ Directory: ./output/f1
 ```bash
 ufix -h LW02.prj LW02_Report.html
 ```
-Отчёт, конвертированный в формате `PDF` можно предсмотреть по ссылке [LW02_Report](LW02_Report.pdf).
+Отчёт, конвертированный в формат `PDF` можно предсмотреть по ссылке [LW02_Report](LW02_Report.pdf).
