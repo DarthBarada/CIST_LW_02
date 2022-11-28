@@ -1,171 +1,80 @@
-# Лабораторная работа № 1
+# Лабораторная работа № 2
 ```
-Тема:		"Фаззинг тестирование"
+Тема:		"Фиксация и контроль целостности информации"
 Группа:		ИУ8-93
 Студент:	Митрофанов Д.А.
 ```
 ---
 ## Цель
-Изучить принципы фаззинг-тестирования с использованием инструмента AFL++.
+Изучить принципы использования программы ФИКС Unix 1.0 для снятия контрольных сумм.
 ## Задание
-1. Выбрать цель для тестирования с открытым исходным кодом, написанную на языке C/C++;
-2. Собрать AFL++;
-3. Собрать цель тестирования с использованием компиляторов AFL++;
-4. Осуществить фаззинг-тестирование;
-5. Составить отчёт по результатам работы.
+1. С помощью утилиты ФИКС-Unix 1.0 снять контрольную сумму по уровню 3 произвольной директории; 
+2. По результатам работы программы отослать `HTML` отчёт.
 ## Ход работы
-### 1 Выбор цели
-В качестве цели тестирования был выбран инструмент `armake`. Этот инструмент используется разработчиками для создания дополнительного контента в игре `Arma 3`. Данный инструмент позволяет:
-* `binarize` - преобразовать файл в представление, подходящее для быстрой загрузки игровым движком (.bin);
-* `derapify` - преобразовать любой двоичный файл в обычный текст;
-* `build` - создавать архивы .pbo, интерпретируемы игрой;
-* `inspect` - проверять сборку .pbo;
-* `unpack` - распаковаывать архивы .pbo;
-* `cat` - проверять наличие файла в .pbo;
-* `keygen` - создавать ключи для подписи;
-* `sign` - подписывать ключами .pbo;
-* `img2paa` - преобразовывать изображения в изоброажения с расширением .paa, воспринимаемые игрой;
-* `paa2img` - преобразовывать .paa обратно в изображения.
-
-Инструмент имеет открытый исходный код и его можно найти на [github](https://github.com/KoffeinFlummi/armake).
-### 2 Сборка AFL++
-Собираем AFL++ согласно [инструкции](tools/AFLplusplus/docs/INSTALL.md).
-```sh
-sudo apt-get update
-sudo apt-get install -y build-essential python3-dev automake cmake git flex bison libglib2.0-dev libpixman-1-dev python3-setuptools cargo libgtk-3-dev
-sudo apt-get install -y lld-12 llvm-12 llvm-12-dev clang-12
-sudo apt-get install -y gcc-$(gcc --version|head -n1|sed 's/\..*//'|sed 's/.* //')-plugin-dev libstdc++-$
-
-pushd .
-cd tools/AFLplusplus
-make source-only
-sudo make install
-popd
+### 1 Инициализация
+Воспользуемся результатами лабораторной работы № 1.
+```bash
+git clone https://github.com/DarthBarada/CIST_LW_01.git ./CIST_LW_02
+cd CIST_LW_02/
+git remote remove origin
+tar -xzf ./output.tar.gz ./output
+git remote add origin https://github.com/DarthBarada/CIST_LW_02.git
+``` 
+### 2 Снятие контрльных сумм
+Используем `ufix` для того, чтобы вывести рекурсивно все пути файлов директории `./output` в файл `filelist.out`.
+```bash
+ufix -jR output/ > filelist.out
 ```
-### 3 Сборка цели тестирования
-Для сборки armake в директорию `armake/src` был добавлен файл `argv-fuzz-inl.h`.
-В файл `main.c` были внесены изменения, представленные ниже:
-```sh
-				исходный файл	изменённый файл
-			       	   | 		    |
-diff tools/armake/src/main.c tools/main.c 
-36a37
-> #include "argv-fuzz-inl.h"
-218a220
->       AFL_INIT_ARGV();
+Фрагмент файла [filelist.out](filelist.out) представлен ниже:
 ```
-> Изменения в файл `main.c` были добавлены после прочтения [статьи](https://milek7.pl/howlongsudofuzz/), в которой говорится, что AFL не поддерживает argv фаззинг. Но речь в той статье шла о сталом AFL, поэтому на момент написания я задумываюсь о необходимости данных изменений в рамках фаззинга с AFL++.
-
-В файле `armake/Makefile` был изменён только компилятор:
-```sh
-			исходный файл	изменённый файл
-			       | 			  |
-diff tools/armake/Makefile tools/Makefile 
-11c11
-< CC = gcc
----
-> CC = afl-gcc
+./output/f1/cmdline
+./output/f1/fuzzer_setup
+./output/f1/fuzzer_stats
+./output/f1/fuzz_bitmap
+./output/f1/plot_data
+./output/f1/crashes/id:000000,sig:11,sync:f4,src:000405
+./output/f1/crashes/id:000001,sig:11,src:000386+000037,time:4180231,execs:1043654,op:splice,rep:8
+./output/f1/crashes/id:000002,sig:11,src:000401+000454,time:4188704,execs:1044691,op:splice,rep:2
+./output/f1/crashes/id:000003,sig:06,src:000430+000360,time:4206401,execs:1045928,op:splice,rep:8
+./output/f1/crashes/id:000004,sig:11,src:000486+000369,time:4281925,execs:1053196,op:splice,rep:2
+...
 ```
-Сборка утилиты armake:
-```sh
-pushd .
-cd tools/armake
-make
-popd
+Для каждого файла указанного в `filelist.out` производим расчёт контрольных сумм, используя флаг `-e` программы `ufix`, по результатам расчёта создаётся файл проекта `LW02.prj`.
+```bash
+ufix -e filelist.out LW02.prj
 ```
-### 4 Фаззинг тестирование
-Фаззинг тестирование проводилось в 4 потоках в течение 6 часов. Оно могло производится и дольше, если бы память на устройстве не начала заканчиваться: с утра размер виртуальной машины занимал 250 Gb из-за большого числа сгенерированных файлов и папок. После безуспешной попытки освободить свободное место было принято решение дождаться того момента, чтобы каждый поток проработал чуть больше 6 часов и остановить тестирование.
-
-По результатам тестирования были получены следующие данные:
+Для вывода информации из файла проекта используеся флаг `-v` программы `ufix`.
+```bash
+ufix -v LW02.prj
 ```
-afl-whatsup -d output/
-/usr/bin/afl-whatsup status check tool for afl-fuzz by Michal Zalewski
-
-Individual fuzzers
-==================
-
->>> ./src/armake (0 days, 6 hrs) fuzzer PID: 25719 <<<
-
-  Instance is dead or running remotely, skipping.
-
-  last_find       : none seen yet
-  last_crash      : 4 days, 0 hours
-  last_hang       : 3 days, 23 hours
-  cycles_wo_finds : not available
-  cpu usage %, memory usage %
-  cycles 104, lifetime speed 278 execs/sec, items 406/661 (61%)
-  pending 0/1, coverage 4.70%, crashes saved 56 (!)
-
->>> ./src/armake (0 days, 6 hrs) fuzzer PID: 1783 <<<
-
-  Instance is dead or running remotely, skipping.
-
-  last_find       : none seen yet
-  last_crash      : 4 days, 0 hours
-  last_hang       : 3 days, 23 hours
-  cycles_wo_finds : 0
-  cpu usage %, memory usage %
-  cycles 21, lifetime speed 354 execs/sec, items 43/509 (8%)
-  pending 0/94, coverage 4.86%, crashes saved 85 (!)
-
->>> ./src/armake (0 days, 6 hrs) fuzzer PID: 7681 <<<
-
-  Instance is dead or running remotely, skipping.
-
-  last_find       : none seen yet
-  last_crash      : 4 days, 0 hours
-  last_hang       : 4 days, 0 hours
-  cycles_wo_finds : 0
-  cpu usage %, memory usage %
-  cycles 26, lifetime speed 317 execs/sec, items 48/530 (9%)
-  pending 0/2, coverage 4.90%, crashes saved 78 (!)
-
->>> ./src/armake (0 days, 6 hrs) fuzzer PID: 14733 <<<
-
-  Instance is dead or running remotely, skipping.
-
-  last_find       : none seen yet
-  last_crash      : 3 days, 23 hours
-  last_hang       : 3 days, 23 hours
-  cycles_wo_finds : 0
-  cpu usage %, memory usage %
-  cycles 26, lifetime speed 299 execs/sec, items 181/523 (34%)
-  pending 0/9, coverage 4.87%, crashes saved 78 (!)
-
-Summary stats
-=============
-
-       Fuzzers alive : 0
-      Dead or remote : 4 (included in stats)
-      Total run time : 1 days, 0 hours
-         Total execs : 27 millions
-    Cumulative speed : 1248 execs/sec
-       Pending items : 0 faves, 106 total
-       Crashes saved : 297
-Cycles without finds : 1/0/0/0
-  Time without finds : 0
+Фрагмент информации, содержащейся в файле проекта:
 ```
-Все данные работы фаззинга хранятся в [output.tar.gz](output.tar.gz).
-### 4.1 Первый поток
-![edges](resources/f1/edges.png)
-![high_freq](resources/f1/high_freq.png)
-![low_freq](resources/f1/low_freq.png)
-![exec_speed](resources/f1/exec_speed.png)
-> В начале был момент, когда окно случаайно закрылось и первый поток завершился, его отчётливо можно видеть на графике.
-### 4.2 Второй поток
-![edges](resources/f2/edges.png)
-![high_freq](resources/f2/high_freq.png)
-![low_freq](resources/f2/low_freq.png)
-![exec_speed](resources/f2/exec_speed.png)
-### 4.3 Третий поток
-![edges](resources/f3/edges.png)
-![high_freq](resources/f3/high_freq.png)
-![low_freq](resources/f3/low_freq.png)
-![exec_speed](resources/f3/exec_speed.png)
-### 4.4 Четвёртый поток
-![edges](resources/f4/edges.png)
-![high_freq](resources/f4/high_freq.png)
-![low_freq](resources/f4/low_freq.png)
-![exec_speed](resources/f4/exec_speed.png)
-## Вывод
-В ходе выполнения работы был собран инструмент фаззинг-тестирования AFL++. С помощью AFL++ была скомпилирована цель тестирования, после чего бы проведён её фаззинг с использованием вручную написанных данных.
+Directory: ./output/f1
+ C5C8C19D cmdline        27572FC0 fuzzer_setup   224839DD plot_data
+ 62E1F311 fuzz_bitmap    B5D91452 fuzzer_stats
+
+Directory: ./output/f1/crashes
+ 2379B6A5 README.txt
+ 6419D0E2 id:000000,sig:11,sync:f4,src:000405
+ 95EDF29B id:000001,sig:11,src:000386+000037,time:4180231,execs:1043654,op:splice,rep:8
+ 91BF5EF9 id:000002,sig:11,src:000401+000454,time:4188704,execs:1044691,op:splice,rep:2
+ E0CFBE7E id:000003,sig:06,src:000430+000360,time:4206401,execs:1045928,op:splice,rep:8
+ 04C758E6 id:000004,sig:11,src:000486+000369,time:4281925,execs:1053196,op:splice,rep:2
+ 58E3BB08 id:000005,sig:11,src:000488+000397,time:4284955,execs:1054925,op:splice,rep:4
+ 5E66ED34 id:000006,sig:11,src:000488+000397,time:4284979,execs:1054946,op:splice,rep:8
+ ...
+```
+Как можно заметить, сначала указывается директория, после чего указываются пары контрольная сумма в 16-ричной системе счисления - файл директории, разделённые пробелом. Так как не был указан флаг `-1`, то при выводе информации директории `./output/f1` пары контрольная сумма - файл располагаются в табличном формате, пример того же вывода при использовании флага `-1` (одна строка - один файл) представлен ниже:
+```   
+Directory: ./output/f1
+ C5C8C19D cmdline
+ 62E1F311 fuzz_bitmap
+ 27572FC0 fuzzer_setup
+ B5D91452 fuzzer_stats
+ 224839DD plot_data
+```
+Для файла проекта `LW02.prj` используем флаг `-h` программы `ufix` для составления отчёта в формате `HTML`.
+```bash
+ufix -h LW02.prj LW02_Report.html
+```
+Отчёт, конвертированный в формате `PDF` можно предсмотреть по ссылке [LW02_Report](LW02_Report.pdf).
